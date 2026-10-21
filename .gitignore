@@ -1,0 +1,7 @@
+.build/
+.build-prof/
+build/
+dist/
+vendor/
+.DS_Store
+.swiftpm/

@@ -1,0 +1,31 @@
+/* Vietnamese UI. Keys are the English strings used in the source. */
+
+"Haptic feedback" = "Rung phản hồi trackpad";
+"Launch at login" = "Mở cùng macOS";
+"Connect Calendar…" = "Kết nối Lịch…";
+"Quit Islet" = "Thoát Islet";
+"Charging" = "Đang sạc";
+"On Battery" = "Dùng pin";
+"Low Battery" = "Pin yếu";
+"Time's up!" = "Hết giờ!";
+"Jot something down…\nPress ⌃⌥N anywhere to open, Esc to close." = "Ghi nhanh gì đó…\nNhấn ⌃⌥N ở bất cứ đâu để mở, Esc để đóng.";
+"Copy" = "Sao chép";
+"Clear all" = "Xoá hết";
+"Drop files on the notch to keep them here" = "Kéo file vào tai thỏ để cất tạm";
+"AirDrop all" = "AirDrop tất cả";
+"Clear shelf" = "Dọn kệ";
+"Nothing playing" = "Chưa có gì đang phát";
+"Can't read Now Playing" = "Không đọc được Now Playing";
+"Play something in Music, Spotify or YouTube and it shows up here." = "Mở Music, Spotify hoặc YouTube là nhạc sẽ hiện ở đây.";
+"Open Music" = "Mở Music";
+"Open the playing app" = "Mở ứng dụng đang phát";
+"Connect Calendar" = "Kết nối Lịch";
+"Nothing else today 🎉" = "Hôm nay rảnh 🎉";
+"All day" = "Cả ngày";
+"Settings" = "Cài đặt";
+"Focus" = "Tập trung";
+"Pause" = "Tạm dừng";
+"Start" = "Bắt đầu";
+"Reset" = "Đặt lại";
+"Language" = "Ngôn ngữ";
+"System default" = "Theo hệ thống";
