@@ -10,8 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/ZNLong2203/Islet/releases/latest"><img src="https://img.shields.io/github/v/release/ZNLong2203/Islet?label=download&color=ff5fa2" alt="Latest release"></a>
-  <a href="https://github.com/ZNLong2203/Islet/releases"><img src="https://img.shields.io/github/downloads/ZNLong2203/Islet/total?color=8a5cff" alt="Downloads"></a>
+  <a href="https://github.com/ZNLong2203/Islet/releases/latest"><img src="https://img.shields.io/github/v/release/ZNLong2203/Islet?label=download&color=ff5fa2&cacheSeconds=1800" alt="Latest release"></a>
+  <a href="https://github.com/ZNLong2203/Islet/releases"><img src="https://img.shields.io/github/downloads/ZNLong2203/Islet/total?color=8a5cff&cacheSeconds=1800" alt="Downloads"></a>
   <img src="https://img.shields.io/badge/macOS-14%2B-111?logo=apple" alt="macOS 14+">
   <img src="https://img.shields.io/badge/Apple%20Silicon-native-111" alt="Apple Silicon">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/ZNLong2203/Islet?color=2ea043" alt="MIT License"></a>
