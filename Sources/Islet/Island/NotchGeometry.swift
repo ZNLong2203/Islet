@@ -30,6 +30,11 @@ enum Metrics {
     static let expandedTopRadius: CGFloat = 14
     static let expandedWidth: CGFloat = 620
     static let expandedContentHeight: CGFloat = 156
+    /// Banner peeks: label font, icon column and the room the battery badge needs on the right.
+    static let peekFontSize: CGFloat = 13
+    static let peekIconWidth: CGFloat = 16
+    static let peekIconSpacing: CGFloat = 5
+    static let peekTrailingWidth: CGFloat = 70
     /// Transparent margin around the largest island so its shadow is not clipped.
     static let windowPadding: CGFloat = 40
 

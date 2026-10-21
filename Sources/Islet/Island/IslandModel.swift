@@ -21,6 +21,25 @@ enum PeekKind: Equatable {
     case lowBattery
     case timerFinished
     case nowPlaying
+
+    /// Text on the left wing of a banner peek (not used by `.nowPlaying`, which drops down).
+    var title: String {
+        switch self {
+        case .power(let plugged): plugged ? String(localized: "Charging") : String(localized: "On Battery")
+        case .lowBattery: String(localized: "Low Battery")
+        case .timerFinished: String(localized: "Time's up!")
+        case .nowPlaying: ""
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .power(let plugged): plugged ? "bolt.fill" : "powerplug"
+        case .lowBattery: "exclamationmark.triangle.fill"
+        case .timerFinished: "timer"
+        case .nowPlaying: "music.note"
+        }
+    }
 }
 
 enum Presentation: Equatable {
@@ -86,12 +105,21 @@ final class IslandModel {
             return CGSize(width: n.width + 2 * wingWidth + flare, height: n.height)
         case .peek(.nowPlaying):
             return CGSize(width: max(n.width + 180, 360), height: n.height + 54)
-        case .peek:
-            return CGSize(width: n.width + 2 * 86 + flare, height: n.height)
+        case .peek(let kind):
+            return CGSize(width: n.width + 2 * peekWingWidth(kind) + flare, height: n.height)
         case .expanded:
             return CGSize(width: max(Metrics.expandedWidth, n.width + 400),
                           height: n.height + Metrics.expandedContentHeight)
         }
+    }
+
+    /// Each side of a banner peek is sized to fit its label, so a longer translation widens
+    /// the island instead of wrapping onto a second line.
+    private func peekWingWidth(_ kind: PeekKind) -> CGFloat {
+        let text = NSAttributedString(string: kind.title, attributes: [.font: NSFont.systemFont(ofSize: Metrics.peekFontSize, weight: .semibold)])
+        let label = Metrics.peekIconWidth + Metrics.peekIconSpacing + ceil(text.size().width) + 2
+        // WingsLayout insets content 8pt further than the flare already accounts for.
+        return max(label, Metrics.peekTrailingWidth) + 8
     }
 
     func startServices() {

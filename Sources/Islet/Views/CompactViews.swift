@@ -36,29 +36,21 @@ struct PeekView: View {
         case .power(let plugged):
             let color: Color = plugged ? .green : .white
             WingsLayout(notchWidth: model.notchSize.width, height: model.notchSize.height) {
-                Label(plugged ? String(localized: "Charging") : String(localized: "On Battery"), systemImage: plugged ? "bolt.fill" : "powerplug")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(color)
-                    .symbolEffect(.bounce, value: kind)
+                PeekLabel(kind: kind, color: color)
             } trailing: {
                 BatteryBadge(level: model.battery.level, charging: plugged, tint: color)
             }
 
         case .lowBattery:
             WingsLayout(notchWidth: model.notchSize.width, height: model.notchSize.height) {
-                Label("Low Battery", systemImage: "exclamationmark.triangle.fill")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.red)
+                PeekLabel(kind: kind, color: .red)
             } trailing: {
                 BatteryBadge(level: model.battery.level, charging: false, tint: .red)
             }
 
         case .timerFinished:
             WingsLayout(notchWidth: model.notchSize.width, height: model.notchSize.height) {
-                Label("Time's up!", systemImage: "timer")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.orange)
-                    .symbolEffect(.bounce, options: .repeat(3), value: kind)
+                PeekLabel(kind: kind, color: .orange, bounces: 3)
             } trailing: {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 15))
@@ -87,5 +79,25 @@ struct PeekView: View {
                 .frame(maxHeight: .infinity)
             }
         }
+    }
+}
+
+/// Icon + title for banner peeks. Its metrics mirror `IslandModel.peekWingWidth`, which sizes the island to fit.
+private struct PeekLabel: View {
+    let kind: PeekKind
+    let color: Color
+    var bounces = 1
+
+    var body: some View {
+        HStack(spacing: Metrics.peekIconSpacing) {
+            Image(systemName: kind.symbol)
+                .frame(width: Metrics.peekIconWidth)
+                .symbolEffect(.bounce, options: .repeat(bounces), value: kind)
+            Text(kind.title)
+                .lineLimit(1)
+                .fixedSize()
+        }
+        .font(.system(size: Metrics.peekFontSize, weight: .semibold))
+        .foregroundStyle(color)
     }
 }

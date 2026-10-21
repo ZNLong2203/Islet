@@ -65,7 +65,7 @@ final class NotchController {
 
     /// Drive the island from a shell for screenshots:
     /// `notifyutil`-style via DistributedNotificationCenter, name `io.github.znlong2203.islet.debug`,
-    /// object `expand:<tab>` | `collapse` | `peek:<power|low|timer|track>` | `media:<json file>` |
+    /// object `expand:<tab>` | `collapse` | `peek:<power|unplugged|low|timer|track>` | `media:<json file>` |
     /// `timer:<minutes>` | `lang:<system|en|vi>`.
     private func installDebugHook() {
         DistributedNotificationCenter.default().addObserver(
@@ -87,7 +87,7 @@ final class NotchController {
             debugPinned = false
             collapse()
         case "peek":
-            let kinds: [String: PeekKind] = ["power": .power(plugged: true), "low": .lowBattery,
+            let kinds: [String: PeekKind] = ["power": .power(plugged: true), "unplugged": .power(plugged: false), "low": .lowBattery,
                                              "timer": .timerFinished, "track": .nowPlaying]
             if let kind = kinds[arg] { model.showPeek(kind, seconds: 6) }
         case "media":
