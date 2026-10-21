@@ -59,7 +59,7 @@ A Pomodoro timer with 5, 15, 25 and 45 minute presets. The countdown stays besid
 ### 🔋 Live activities
 The island pops out for a moment when you plug in or unplug the charger, when the battery drops to 20% or below, and when a timer finishes. Your calendar's next events sit next to the music.
 
-<p align="center"><img src="docs/screenshots/power.png" alt="Charging indicator beside the notch"></p>
+<p align="center"><img src="docs/screenshots/charging.png" alt="Charging indicator beside the notch"></p>
 
 ### 🪶 Built to stay out of the way
 The visualizer and scrolling titles run as Core Animation, so the system's render server animates them and Islet does no work per frame. Clicks anywhere outside the island go straight through to the menu bar. It needs no Accessibility or Screen Recording permission.
