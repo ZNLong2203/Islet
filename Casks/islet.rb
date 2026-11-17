@@ -1,6 +1,6 @@
 cask "islet" do
-  version "0.1.1"
-  sha256 "ae02c3063da0a048341795fdae559d89c19a3494f6725be6ded6dd158aede3ba"
+  version "0.2.0"
+  sha256 "50b0fcb9be9b6018215b04a15d43c6cae03dba7f6ed723353d32c45b8ff78a81"
 
   url "https://github.com/ZNLong2203/Islet/releases/download/v#{version}/Islet-#{version}.zip"
   name "Islet"
