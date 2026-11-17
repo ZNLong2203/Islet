@@ -57,6 +57,21 @@ struct PeekView: View {
                     .foregroundStyle(.green)
             }
 
+        case .shelfAdded(let count):
+            WingsLayout(notchWidth: model.notchSize.width, height: model.notchSize.height) {
+                PeekLabel(kind: kind, color: .white)
+            } trailing: {
+                if count > 1 {
+                    Text("+\(count)")
+                        .font(.system(size: 13, weight: .semibold, design: .rounded).monospacedDigit())
+                        .foregroundStyle(.green)
+                } else {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 15))
+                        .foregroundStyle(.green)
+                }
+            }
+
         case .nowPlaying:
             VStack(spacing: 0) {
                 Color.clear.frame(height: model.notchSize.height)

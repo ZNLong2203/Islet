@@ -6,6 +6,21 @@
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
 	<string>Islet</string>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Any file</string>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>None</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.item</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleExecutable</key>
 	<string>Islet</string>
 	<key>CFBundleIconFile</key>
@@ -29,6 +44,29 @@
 	<string>14.0</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>NSServices</key>
+	<array>
+		<dict>
+			<key>NSMenuItem</key>
+			<dict>
+				<key>default</key>
+				<string>Add to Islet</string>
+			</dict>
+			<key>NSMessage</key>
+			<string>addToShelf</string>
+			<key>NSPortName</key>
+			<string>Islet</string>
+			<key>NSRequiredContext</key>
+			<dict/>
+			<key>NSSendTypes</key>
+			<array>
+				<string>public.file-url</string>
+				<string>NSFilenamesPboardType</string>
+				<string>NSURLPboardType</string>
+				<string>NSStringPboardType</string>
+			</array>
+		</dict>
+	</array>
 	<key>NSCalendarsFullAccessUsageDescription</key>
 	<string>Shows your upcoming events right in the notch.</string>
 	<key>NSCalendarsUsageDescription</key>

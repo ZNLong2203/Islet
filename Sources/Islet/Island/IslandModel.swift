@@ -21,6 +21,7 @@ enum PeekKind: Equatable {
     case lowBattery
     case timerFinished
     case nowPlaying
+    case shelfAdded(Int)
 
     /// Text on the left wing of a banner peek (not used by `.nowPlaying`, which drops down).
     var title: String {
@@ -28,6 +29,7 @@ enum PeekKind: Equatable {
         case .power(let plugged): plugged ? String(localized: "Charging") : String(localized: "On Battery")
         case .lowBattery: String(localized: "Low Battery")
         case .timerFinished: String(localized: "Time's up!")
+        case .shelfAdded: String(localized: "Added to Shelf")
         case .nowPlaying: ""
         }
     }
@@ -37,6 +39,7 @@ enum PeekKind: Equatable {
         case .power(let plugged): plugged ? "bolt.fill" : "powerplug"
         case .lowBattery: "exclamationmark.triangle.fill"
         case .timerFinished: "timer"
+        case .shelfAdded: "tray.and.arrow.down.fill"
         case .nowPlaying: "music.note"
         }
     }
@@ -57,6 +60,9 @@ final class IslandModel {
     var isExpanded = false
     var tab: ExpandedTab = .home
     var isDropTargeted = false
+    /// A context menu or settings menu is open, or items are being dragged out: don't collapse underneath them.
+    var isMenuOpen = false
+    var isDraggingOut = false
     /// Bumped to ask the notes editor to grab keyboard focus.
     var notesFocusRequest = 0
     private(set) var peek: PeekKind?
@@ -131,6 +137,7 @@ final class IslandModel {
             }
         }
         timer.onFinish = { [weak self] in self?.showPeek(.timerFinished, seconds: 4) }
+        shelf.onAdded = { [weak self] count in self?.showPeek(.shelfAdded(count), seconds: 2.2) }
         media.onTrackChange = { [weak self] in
             guard let self, Date().timeIntervalSince(self.launchDate) > 3 else { return }
             self.showPeek(.nowPlaying, seconds: 3)

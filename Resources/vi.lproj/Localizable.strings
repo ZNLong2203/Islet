@@ -12,8 +12,6 @@
 "Copy" = "Sao chép";
 "Clear all" = "Xoá hết";
 "Drop files on the notch to keep them here" = "Kéo file vào tai thỏ để cất tạm";
-"AirDrop all" = "AirDrop tất cả";
-"Clear shelf" = "Dọn kệ";
 "Nothing playing" = "Chưa có gì đang phát";
 "Can't read Now Playing" = "Không đọc được Now Playing";
 "Play something in Music, Spotify or YouTube and it shows up here." = "Mở Music, Spotify hoặc YouTube là nhạc sẽ hiện ở đây.";
@@ -29,3 +27,27 @@
 "Reset" = "Đặt lại";
 "Language" = "Ngôn ngữ";
 "System default" = "Theo hệ thống";
+
+/* File shelf */
+"Tip: shake a file while dragging it to open a drop zone anywhere" = "Mẹo: lắc file đang kéo để mở vùng thả ngay tại con trỏ";
+"Add from clipboard (⌃⌥V)" = "Thêm từ clipboard (⌃⌥V)";
+"Share selected, or all" = "Chia sẻ mục đã chọn, hoặc tất cả";
+"AirDrop selected, or all" = "AirDrop mục đã chọn, hoặc tất cả";
+"Copy selected, or all" = "Sao chép mục đã chọn, hoặc tất cả";
+"Zip selected, or all" = "Nén zip mục đã chọn, hoặc tất cả";
+"Remove selected, or all" = "Xoá mục đã chọn, hoặc tất cả";
+"%lld items" = "%lld mục";
+"%lld of %lld selected" = "Đã chọn %lld/%lld";
+"Open" = "Mở";
+"Show in Finder" = "Hiện trong Finder";
+"Zip" = "Nén zip";
+"Share" = "Chia sẻ";
+"Remove from Shelf" = "Gỡ khỏi kệ";
+"Archive" = "Lưu trữ";
+"Text snippet" = "Đoạn văn bản";
+"Image" = "Ảnh";
+"Link" = "Liên kết";
+"Added to Shelf" = "Đã thêm vào kệ";
+"Drop here to add to Islet" = "Thả vào đây để thêm vào Islet";
+"Shake a dragged file to open drop zone" = "Lắc file đang kéo để mở vùng thả";
+"Remove from shelf after dragging out" = "Gỡ khỏi kệ sau khi kéo ra";

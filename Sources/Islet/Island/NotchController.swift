@@ -13,16 +13,41 @@ final class NotchController {
     private var monitors: [Any] = []
     private var hoverTask: Task<Void, Never>?
     private var notesHotKey: HotKey?
+    private var shelfHotKey: HotKey?
+    private var pasteHotKey: HotKey?
     private var isMenuOpen = false
+    /// Opened with a shortcut: stays open until the pointer visits the island, or a few seconds pass.
+    private var openedByKeyboard = false
+    private var keyboardOpenTask: Task<Void, Never>?
+    private lazy var dropZone = DropZoneController(shelf: model.shelf)
+    private var shake = ShakeDetector()
+    private var shakeCooldownUntil: TimeInterval = 0
+    /// Change count of the drag pasteboard when the button went down: a shake only counts if a new drag started since.
+    private var pressDragChangeCount = 0
 
     private var hapticsEnabled: Bool {
         get { UserDefaults.standard.object(forKey: "haptics") as? Bool ?? true }
         set { UserDefaults.standard.set(newValue, forKey: "haptics") }
     }
 
+    /// Shaking a dragged file opens a drop zone beside the cursor.
+    private var shakeEnabled: Bool {
+        get { UserDefaults.standard.object(forKey: "shakeToShelf") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "shakeToShelf") }
+    }
+
     func start() {
-        let hosting = NSHostingView(rootView: IslandRootView(model: model))
+        let hosting = DropHostingView(rootView: IslandRootView(model: model))
         hosting.sizingOptions = []
+        hosting.targetSize = { [weak self] in self?.model.islandSize ?? .zero }
+        hosting.onTargetChange = { [weak self] targeted in
+            guard let model = self?.model else { return }
+            model.isDropTargeted = targeted
+            if targeted { model.tab = .shelf }
+        }
+        hosting.onDrop = { [weak self] pasteboard in
+            (self?.model.shelf.addFromPasteboard(pasteboard) ?? 0) > 0
+        }
         panel.contentView = hosting
         panel.keyPolicy = { [weak self] in
             guard let self else { return false }
@@ -53,6 +78,24 @@ final class NotchController {
             MainActor.assumeIsolated { self?.toggleNotes() }
         }
 
+        // ⌃⌥D opens or closes the shelf, ⌃⌥V puts the clipboard on it.
+        shelfHotKey = HotKey(keyCode: kVK_ANSI_D, modifiers: controlKey | optionKey, id: 2) { [weak self] in
+            MainActor.assumeIsolated { self?.toggleShelf() }
+        }
+        pasteHotKey = HotKey(keyCode: kVK_ANSI_V, modifiers: controlKey | optionKey, id: 3) { [weak self] in
+            MainActor.assumeIsolated { _ = self?.model.shelf.addFromPasteboard() }
+        }
+
+        // Menus and drags out of the shelf must not be interrupted by the island collapsing.
+        for (name, open) in [(NSMenu.didBeginTrackingNotification, true), (NSMenu.didEndTrackingNotification, false)] {
+            NotificationCenter.default.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.model.isMenuOpen = open
+                    if !open { self?.handleMouse() }
+                }
+            }
+        }
+
         model.startServices()
         enableLaunchAtLoginOnce()
         #if DEBUG
@@ -66,7 +109,8 @@ final class NotchController {
     /// Drive the island from a shell for screenshots:
     /// `notifyutil`-style via DistributedNotificationCenter, name `io.github.znlong2203.islet.debug`,
     /// object `expand:<tab>` | `collapse` | `peek:<power|unplugged|low|timer|track>` | `media:<json file>` |
-    /// `timer:<minutes>` | `lang:<system|en|vi>`.
+    /// `timer:<minutes>` | `lang:<system|en|vi>` | `shelf-add:<path>` | `shelf-paste` | `shelf-select[:<name part>]` |
+    /// `shelf-clear` | `shelf-zip` | `shelf-dump:<file>` | `state:<file>` | `dropzone`.
     private func installDebugHook() {
         DistributedNotificationCenter.default().addObserver(
             forName: Notification.Name("io.github.znlong2203.islet.debug"), object: nil, queue: .main
@@ -97,6 +141,27 @@ final class NotchController {
             model.timer.start()
         case "lang":
             if let language = AppLanguage(rawValue: arg) { setLanguage(language) }
+        case "shelf-add":
+            model.shelf.add([.file(URL(fileURLWithPath: arg))])
+        case "shelf-paste":
+            _ = model.shelf.addFromPasteboard()
+        case "shelf-select":
+            let names = arg.split(separator: ",").map(String.init)
+            model.shelf.selection = Set(model.shelf.items.filter { item in
+                names.isEmpty || names.contains { item.url.lastPathComponent.contains($0) }
+            }.map(\.id))
+        case "shelf-clear":
+            model.shelf.remove(Set(model.shelf.items.map(\.id)))
+        case "shelf-zip":
+            model.shelf.zip(model.shelf.targets)
+        case "shelf-dump":
+            let lines = model.shelf.items.map { "\($0.url.path)\t\($0.isOwned ? "owned" : "ref")\t\(model.shelf.selection.contains($0.id) ? "sel" : "-")" }
+            try? lines.joined(separator: "\n").write(toFile: arg, atomically: true, encoding: .utf8)
+        case "state":
+            let text = "expanded=\(model.isExpanded) menuOpen=\(model.isMenuOpen) draggingOut=\(model.isDraggingOut) targeted=\(model.isDropTargeted)"
+            try? text.write(toFile: arg, atomically: true, encoding: .utf8)
+        case "dropzone":
+            dropZone.show(near: NSEvent.mouseLocation)
         default:
             break
         }
@@ -118,13 +183,35 @@ final class NotchController {
 
     private func installMouseMonitors() {
         let mask: NSEvent.EventTypeMask = [.mouseMoved, .leftMouseDragged, .leftMouseUp, .rightMouseDragged]
-        if let global = NSEvent.addGlobalMonitorForEvents(matching: mask, handler: { [weak self] _ in
-            MainActor.assumeIsolated { self?.handleMouse() }
+        if let global = NSEvent.addGlobalMonitorForEvents(matching: mask.union(.leftMouseDown), handler: { [weak self] event in
+            MainActor.assumeIsolated {
+                self?.trackShake(event)
+                if event.type != .leftMouseDown { self?.handleMouse() }
+            }
         }) { monitors.append(global) }
         if let local = NSEvent.addLocalMonitorForEvents(matching: mask, handler: { [weak self] event in
             MainActor.assumeIsolated { self?.handleMouse() }
             return event
         }) { monitors.append(local) }
+    }
+
+    /// Watches other apps' drags for a shake. The drag pasteboard is only read once a shake is seen.
+    private func trackShake(_ event: NSEvent) {
+        switch event.type {
+        case .leftMouseDown:
+            pressDragChangeCount = NSPasteboard(name: .drag).changeCount
+            shake.reset()
+        case .leftMouseDragged:
+            guard shakeEnabled, event.timestamp > shakeCooldownUntil, !dropZone.isVisible,
+                  shake.feed(x: NSEvent.mouseLocation.x, at: event.timestamp) else { return }
+            let pasteboard = NSPasteboard(name: .drag)
+            guard pasteboard.changeCount != pressDragChangeCount,
+                  pasteboard.canReadObject(forClasses: [NSURL.self, NSImage.self], options: nil) else { return }
+            shakeCooldownUntil = event.timestamp + 1.5
+            dropZone.show(near: NSEvent.mouseLocation)
+        default:
+            break
+        }
     }
 
     /// Island frame in screen coordinates for the current presentation.
@@ -151,6 +238,8 @@ final class NotchController {
         if panel.ignoresMouseEvents != ignoresMouse { panel.ignoresMouseEvents = ignoresMouse }
 
         if inside {
+            // Once the pointer arrives, hovering takes over from the shortcut.
+            if openedByKeyboard { releaseKeyboardOpen() }
             guard !expanded else { hoverTask?.cancel(); hoverTask = nil; return }
             guard hoverTask == nil else { return }
             let dragging = NSEvent.pressedMouseButtons & 1 != 0
@@ -177,7 +266,7 @@ final class NotchController {
         #if DEBUG
         if debugPinned { return true }
         #endif
-        return isMenuOpen || model.isDropTargeted || (panel.isKeyWindow && model.tab == .notes)
+        return openedByKeyboard || isMenuOpen || model.isMenuOpen || model.isDraggingOut || model.isDropTargeted || (panel.isKeyWindow && model.tab == .notes)
     }
 
     func expand(tab: ExpandedTab? = nil) {
@@ -191,6 +280,7 @@ final class NotchController {
     }
 
     func collapse() {
+        releaseKeyboardOpen()
         hoverTask?.cancel()
         hoverTask = nil
         model.isExpanded = false
@@ -200,6 +290,29 @@ final class NotchController {
             panel.orderFrontRegardless()
         }
         panel.ignoresMouseEvents = true
+    }
+
+    private func toggleShelf() {
+        if model.isExpanded && model.tab == .shelf {
+            collapse()
+            return
+        }
+        // Set before expanding, or the pointer being elsewhere would collapse it straight away.
+        openedByKeyboard = true
+        keyboardOpenTask?.cancel()
+        keyboardOpenTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(6))
+            guard !Task.isCancelled else { return }
+            self?.releaseKeyboardOpen()
+            self?.handleMouse()
+        }
+        expand(tab: .shelf)
+    }
+
+    private func releaseKeyboardOpen() {
+        openedByKeyboard = false
+        keyboardOpenTask?.cancel()
+        keyboardOpenTask = nil
     }
 
     private func toggleNotes() {
@@ -220,6 +333,14 @@ final class NotchController {
         let haptics = NSMenuItem(title: String(localized: "Haptic feedback"), action: #selector(MenuTarget.toggleHaptics), keyEquivalent: "")
         haptics.state = hapticsEnabled ? .on : .off
         menu.addItem(haptics)
+
+        let shake = NSMenuItem(title: String(localized: "Shake a dragged file to open drop zone"), action: #selector(MenuTarget.toggleShake), keyEquivalent: "")
+        shake.state = shakeEnabled ? .on : .off
+        menu.addItem(shake)
+
+        let removeAfterDrag = NSMenuItem(title: String(localized: "Remove from shelf after dragging out"), action: #selector(MenuTarget.toggleRemoveAfterDrag), keyEquivalent: "")
+        removeAfterDrag.state = model.shelf.removesAfterDrag ? .on : .off
+        menu.addItem(removeAfterDrag)
 
         let login = NSMenuItem(title: String(localized: "Launch at login"), action: #selector(MenuTarget.toggleLogin), keyEquivalent: "")
         login.state = SMAppService.mainApp.status == .enabled ? .on : .off
@@ -255,6 +376,8 @@ final class NotchController {
     }
 
     fileprivate func toggleHaptics() { hapticsEnabled.toggle() }
+    fileprivate func toggleShake() { shakeEnabled.toggle() }
+    fileprivate func toggleRemoveAfterDrag() { model.shelf.removesAfterDrag.toggle() }
 
     /// The first launch from /Applications turns on start-at-login; the ⚙️ menu can turn it off.
     private func enableLaunchAtLoginOnce() {
@@ -329,6 +452,8 @@ private final class MenuTarget: NSObject {
     init(controller: NotchController) { self.controller = controller }
 
     @objc func toggleHaptics() { MainActor.assumeIsolated { controller?.toggleHaptics() } }
+    @objc func toggleShake() { MainActor.assumeIsolated { controller?.toggleShake() } }
+    @objc func toggleRemoveAfterDrag() { MainActor.assumeIsolated { controller?.toggleRemoveAfterDrag() } }
     @objc func toggleLogin() { MainActor.assumeIsolated { controller?.toggleLogin() } }
     @objc func connectCalendar() { MainActor.assumeIsolated { controller?.connectCalendar() } }
     @objc func setLanguage(_ sender: NSMenuItem) {

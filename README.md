@@ -43,10 +43,19 @@ Press **⌃⌥N** from any app and the island drops down with the cursor already
 
 <p align="center"><img src="docs/screenshots/notes.png" alt="Quick notes scratchpad inside the notch"></p>
 
-### 📥 File shelf
-Drag files onto the notch to park them while you switch apps or Spaces. Drag them out wherever you need them, double-click to open, or AirDrop everything at once.
+### 📥 File shelf, like Dropover
+Park files, images, links and text on the notch while you switch apps or Spaces, then drag them wherever they need to go. There are five ways to put something on the shelf:
 
-<p align="center"><img src="docs/screenshots/shelf.png" alt="File shelf holding an image, a PDF and a zip"></p>
+- **Drag it onto the notch.** The island opens by itself when you bring something to it.
+- **Shake it.** Grab a file anywhere and shake it, and a drop zone appears right under your cursor, so you never have to carry it up to the notch.
+- **Right-click → Add to Islet** in Finder (or **Finder → Services → Add to Islet**). The same entry saves selected text from any app as a snippet.
+- **⌃⌥V** adds whatever is on the clipboard: files, an image, a link or text.
+- **`open -a Islet file`** from a script.
+
+Click a tile to select it, then drag the whole selection out at once. Share, AirDrop, copy or zip the selection (or everything, when nothing is selected) with the buttons on the right, or right-click an item for Open, Show in Finder, Share and more. Files stay where they are; the shelf only remembers them. Text, images and links you add are saved as real files, so they can be dragged out like anything else.
+
+<p align="center"><img src="docs/screenshots/shelf-actions.png" alt="File shelf with five items, two selected, and buttons to share, AirDrop, copy and zip"></p>
+<p align="center"><img src="docs/screenshots/dropzone.png" alt="The drop zone that appears next to the cursor when a dragged file is shaken" width="350"></p>
 
 ### ⏱ Focus timer
 A Pomodoro timer with 5, 15, 25 and 45 minute presets. The countdown stays beside the notch while you work, and a chime sounds when time is up.
@@ -100,10 +109,12 @@ Islet turns on **Launch at login** the first time it runs from Applications. You
 |---|---|
 | Open the island | Hover over the notch |
 | Quick note from anywhere | **⌃⌥N**, then **Esc** to close |
-| Put files on the shelf | Drag them onto the notch |
+| Put files on the shelf | Drag them onto the notch, shake them while dragging, or right-click → **Add to Islet** in Finder |
+| Put the clipboard on the shelf | **⌃⌥V** |
+| Open or close the shelf | **⌃⌥D** |
 | Seek | Drag the progress bar |
 | Open the playing app | Click the album art |
-| Settings | ⚙️ in the top-right corner: haptics, launch at login, language (English / Tiếng Việt), quit |
+| Settings | ⚙️ in the top-right corner: haptics, shake to open the drop zone, remove from shelf after dragging out, launch at login, language (English / Tiếng Việt), quit |
 
 ## FAQ
 
@@ -119,6 +130,9 @@ No. Islet makes no network requests and has no analytics. Notes, shelf items and
 **How is Islet different from NotchNook, Alcove or boring.notch?**
 NotchNook and Alcove are polished paid apps. [boring.notch](https://github.com/TheBoredTeam/boring.notch) is a great open-source option with more features. Islet aims to be the lightweight one: a sub-1 MB download that idles at 0% CPU, with a global quick-notes shortcut.
 
+**I don't see "Add to Islet" in Finder's right-click menu.**
+It appears at the bottom of the menu once Islet has run at least once. If it's missing, open Islet, then restart Finder (`killall Finder`). You can also switch it on under *System Settings → Keyboard → Keyboard Shortcuts → Services → Files and Folders*, and give it a shortcut there.
+
 **How do I uninstall it?**
 Run `brew uninstall --zap --cask islet`, or quit Islet from ⚙️ and drag it to the Trash.
 
@@ -133,10 +147,10 @@ scripts/build-app.sh --run          # builds build/Islet.app and launches it
 
 ```
 Sources/Islet/
-  App/        entry point, SIGTERM handling
+  App/        entry point, SIGTERM handling, "Add to Islet" service
   Island/     NotchPanel (transparent window), NotchController (hover, click-through, hotkey, settings),
-              IslandModel (state + sizing), NotchShape, NotchGeometry
-  Services/   NowPlaying, Battery (IOKit), Calendar (EventKit), Shelf, Notes, FocusTimer, HotKey (Carbon)
+              IslandModel (state + sizing), NotchShape, NotchGeometry, DropZonePanel (shake-to-drop)
+  Services/   NowPlaying, Battery (IOKit), Calendar (EventKit), Shelf, Notes, FocusTimer, HotKey (Carbon), ShakeDetector
   Views/      root view, compact wings + peeks, expanded tabs, shared components
 Resources/    Info.plist, app icon, en/vi localizations
 scripts/      build-app.sh, release.sh, make-icns.sh
@@ -146,6 +160,7 @@ A debug build listens for the distributed notification `io.github.znlong2203.isl
 - `expand:<tab>`
 - `collapse`
 - `peek:<power|low|timer|track>`
+- `shelf-add:<path>`, `shelf-select:<names>`, `shelf-zip`, `shelf-clear`, `dropzone`
 - `timer:<min>`
 - `media:<json>`
 - `lang:<system|en|vi>`

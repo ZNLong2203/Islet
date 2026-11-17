@@ -22,12 +22,6 @@ struct IslandRootView: View {
                     .clipShape(shape)
             }
             .frame(width: model.islandSize.width, height: model.islandSize.height)
-            .onDrop(of: [.fileURL], isTargeted: Binding(
-                get: { model.isDropTargeted },
-                set: { model.isDropTargeted = $0; if $0 { model.tab = .shelf } }
-            )) { providers in
-                model.shelf.handleDrop(providers)
-            }
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
